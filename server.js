@@ -9,7 +9,10 @@ var middleware = null;
 
 try {
   middleware = require(config.middleware);
-} catch (e) {}
+} catch (e) {
+  console.error('Error parsing proxy middleware:');
+  console.error(e);
+}
 
 var tmpData = new TmpRuntimeData(config);
 var proxy;
