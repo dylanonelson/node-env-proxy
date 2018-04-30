@@ -27,9 +27,13 @@ function startProxy(config, options) {
   tmpData.writePid(child.pid);
 
   child.on('message', msg => {
+    if (options.debug) {
+      console.log('Server startup message:');
+      console.log(msg);
+    }
     if (msg.error) {
-      console.error('Failed to start proxy:');
-      console.error(msg.error);
+      console.error(chalk.red('Failed to start proxy:\n'));
+      console.error(chalk.bold.red(msg.error));
     } else if (msg.ok) {
       updateProxy(options);
       console.log(chalk.blue(`Proxy started at pid ${child.pid}!\n`));
@@ -114,7 +118,7 @@ module.exports.start = function(config, options) {
       lsProxy();
     })
     .catch(function(e) {
-      console.log(`Starting proxy on port ${config.port} at hostname ${config.hostName}...`);
+      console.log(`Starting proxy on port ${config.port} at hostname ${config.hostName}...\n`);
       startProxy(config, options);
     });
 }
