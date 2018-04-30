@@ -20,12 +20,16 @@ var proxy;
 try { tmpData.writeDefaults(); }
 catch (e) { throw e; }
 
-proxy = EnvProxyFactory({
-  hostName: tmpData.getHostName(),
-  middleware: middleware,
-  port: tmpData.getPort(),
-  urls: tmpData.getUrls(),
-});
+try {
+  proxy = EnvProxyFactory({
+    hostName: tmpData.getHostName(),
+    middleware: middleware,
+    port: tmpData.getPort(),
+    urls: tmpData.getUrls(),
+  });
+} catch (err) {
+  process.send({ error: err });
+}
 
 process.on('SIGINT', function() {
   tmpData.cleanUpPid();

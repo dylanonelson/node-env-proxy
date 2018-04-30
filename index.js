@@ -15,7 +15,7 @@ var tmpData = new TmpRuntimeData();
 var parsedArgv = yargs.argv;
 
 function startProxy(config, options) {
-  child = childProcess.spawn(
+  child = childProcess.fork(
     path.resolve(__dirname, './server.js'),
     [JSON.stringify(config)],
     {
@@ -26,9 +26,20 @@ function startProxy(config, options) {
 
   tmpData.writePid(child.pid);
 
-  if (!options.debug) {
-    child.unref();
-  }
+  child.on('message', msg => {
+    if (msg.error) {
+      console.error('Failed to start proxy:');
+      console.error(msg.error);
+    } else if (msg.ok) {
+      updateProxy(options);
+      console.log(chalk.blue(`Proxy started at pid ${child.pid}!\n`));
+      lsProxy();
+    }
+    if (!options.debug) {
+      child.disconnect();
+      child.unref();
+    }
+  });
 }
 
 function stopProxy() {
@@ -38,8 +49,9 @@ function stopProxy() {
       process.kill(pid);
       console.log(chalk.blue(`Stopped proxy server at pid ${pid}. Goodbye!`));
     } catch (e) {
-      console.log(chalk.red(e));
-      console.log(chalk.red('Could not find proxy process. Try stopping it manually with `kill` and restart.'));
+      console.log(chalk.red('Could not kill proxy process due to the below error.'));
+      console.log(chalk.red('Try stopping it manually with `kill` and restarting it.\n'));
+      console.log(chalk.bold.red(e));
     }
   } else {
     console.log(chalk.red('Found no information about running proxy server.'));
@@ -98,15 +110,12 @@ var command = process.argv[2];
 module.exports.start = function(config, options) {
   checkProxy()
     .then(function(pid) {
-      console.log(chalk.blue('Proxy already running at pid ' + pid + ':\n'));
+      console.log(chalk.blue(`Proxy already running at pid ${pid}:\n`));
       lsProxy();
     })
     .catch(function(e) {
-      console.log('Starting proxy on port ' + config.port + ' at hostname ' + config.hostName + '...');
+      console.log(`Starting proxy on port ${config.port} at hostname ${config.hostName}...`);
       startProxy(config, options);
-      setTimeout(function () {
-        updateProxy(options);
-      }, 500);
     });
 }
 
