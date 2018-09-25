@@ -17,10 +17,9 @@
     "http-proxy": "^1.14.0",
     "ps": "0.0.2",
     "q": "^1.4.1",
+    "url-parse": "^1.4.3",
     "url-pattern": "^1.0.1",
     "yargs": "^5.0.0"
   },
-  "devDependencies": {
-    "url-parse": "^1.4.3"
-  }
+  "devDependencies": {}
 }
