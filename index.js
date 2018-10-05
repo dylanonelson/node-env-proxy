@@ -46,33 +46,53 @@ function startProxy(config, options) {
   });
 }
 
-function stopProxy() {
+function killProxy(signal) {
   var pid = tmpData.getPid();
+
   if (pid !== null) {
     try {
-      process.kill(pid);
-      console.log(chalk.blue(`Stopped proxy server at pid ${pid}. Goodbye!`));
+      process.kill(pid, signal);
+      return pid;
     } catch (e) {
-      console.log(chalk.red('Could not kill proxy process due to the below error.'));
-      console.log(chalk.red('Try stopping it manually with `kill` and restarting it.\n'));
+      console.log(chalk.red(
+        `Could not ${signal === 'SIGINT' ? 'stop' : 'update'} proxy process due to the below error.`
+      ));
+      console.log(chalk.red('Try stopping it manually with `kill` and restarting it.'));
+      console.log();
       console.log(chalk.bold.red(e));
+      return false;
     }
   } else {
     console.log(chalk.red('Found no information about running proxy server.'));
+    return false;
+  }
+}
+
+function stopProxy() {
+  var pid = killProxy('SIGINT');
+  if (pid) {
+    console.log();
+    console.log(chalk.blue(`Stopped proxy server at pid ${pid}. Goodbye!`));
+    console.log();
   }
 }
 
 function updateProxy(settings) {
-  var pid = tmpData.getPid();
-
-  try { tmpData.updateRuntimeConfig(settings); }
-  catch (e) { throw e; }
-
-  try { process.kill(pid, 'SIGHUP'); }
-  catch (e) {
-    console.log(chalk.red(e));
-    console.log(chalk.red('Could not find proxy process. Try stopping it manually with `kill` and restarting it.'));
+  try {
+    tmpData.updateRuntimeConfig(settings);
+  } catch (e) {
+    if (/^EACCES/.test(e.message)) {
+      console.log();
+      console.log(chalk.red('Could not update proxy config: permission denied.'));
+      console.log(chalk.red('If you started the proxy with sudo, you need to run sudo to update it.'));
+      console.log();
+      return false;
+    } else {
+      throw e;
+    }
   }
+
+  return killProxy('SIGHUP');
 }
 
 function checkProxy() {
@@ -128,8 +148,9 @@ module.exports.stop = function() {
 }
 
 module.exports.update = function(settings) {
-  updateProxy(settings);
-  lsProxy();
+  if (updateProxy(settings)) {
+    lsProxy();
+  }
 }
 
 module.exports.stat = function() {
