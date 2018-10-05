@@ -23,7 +23,7 @@ catch (e) { throw e; }
 try {
   proxy = EnvProxyFactory({
     hostName: tmpData.getHostName(),
-    middleware: middleware,
+    middleware: middleware && middleware(config),
     port: tmpData.getPort(),
     urls: tmpData.getUrls(),
   });
@@ -32,7 +32,7 @@ try {
 }
 
 process.on('SIGINT', function() {
-  tmpData.cleanUpPid();
+  tmpData.destroy();
   process.exit();
 });
 

@@ -71,7 +71,7 @@ function updateProxy(settings) {
   try { process.kill(pid, 'SIGHUP'); }
   catch (e) {
     console.log(chalk.red(e));
-    console.log(chalk.red('Could not find proxy process. Try stopping it manually with `kill` and restart.'));
+    console.log(chalk.red('Could not find proxy process. Try stopping it manually with `kill` and restarting it.'));
   }
 }
 
